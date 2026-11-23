@@ -1,6 +1,6 @@
 {
   "name": "@ubms/bms-core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "BMS domain core: unified data model, driver contract, registry, auto-detection, session and polling, settings schema, alarm and settings catalogs.",
   "license": "MIT",
@@ -11,6 +11,6 @@
     "./*": "./src/*.js"
   },
   "dependencies": {
-    "@ubms/transport": "0.1.1"
+    "@ubms/transport": "0.1.2"
   }
 }

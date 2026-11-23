@@ -738,6 +738,11 @@ Temperature group (block 56, 44 bytes). Only in Y; bchiu marked the PC tool Temp
 the newer app decodes write echoes of addresses 68..98 as i16 (ESPHome issue #18 excerpt); treat 56..66 as u16 and
 68..98 as i16 (**unverified**).
 
+Hardware note (2026-11-23): on an ANT-BLE20PHUB the whole block read plausible values. ubms writes it since then (u16 for
+56..66, i16 for 68..94, function 0x22 with the length of one register, then 0x51/0x07 save, like the other registers) and
+relies on the read-back of every write; no capture of the vendor app writing this block is known. The battery ID (262,
+32 ASCII bytes) is written the same way as one 32 byte write, NUL padded, printable ASCII only.
+
 | Addr | Hex | Parameter | Type | Unit |
 |---|---|---|---|---|
 | 56 | 0x0038 | battery high temperature, charge protection | u16 | degC |

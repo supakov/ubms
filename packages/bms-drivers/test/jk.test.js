@@ -589,7 +589,7 @@ test('settings schemas per variant use the right registers and keep unverified v
 
   // Unverified, inferred or without a write register: shown, never written.
   for (const [m, ids] of /** @type {Array<[Map<string, any>, string[]]>} */ ([
-    [s32, ['scp.delay', 'discharge.utp', 'discharge.utpr', 'jk.gps_heartbeat', 'jk.special_charger', 'system.address', 'identity.name', 'jk.wire_resistance_1', 'jk.data_stored_period']],
+    [s32, ['scp.delay', 'jk.gps_heartbeat', 'jk.special_charger', 'system.address', 'identity.name', 'jk.wire_resistance_1', 'jk.data_stored_period']],
     [s24, ['scp.delay', 'jk.smart_sleep_voltage', 'jk.wire_resistance_16']],
     [spb, ['jk.heating_start_temperature', 'jk.smart_sleep_hours', 'jk.port_rs485', 'jk.rcv_time', 'jk.uart1_protocol', 'scp.delay']],
     [suart, ['cell.ovp', 'capacity.nominal', 'system.cell_count']],
@@ -597,6 +597,11 @@ test('settings schemas per variant use the right registers and keep unverified v
     for (const id of ids) assert.equal(m.get(id)?.readOnly, true, `${id} read only`);
   }
   for (const id of ['switch.charge', 'switch.discharge', 'switch.balance']) assert.equal(suart.get(id)?.readOnly, undefined, `${id} writable on UART`);
+  // Discharge low temperature: one signed byte at 0x3A / 0x3B over BLE (JK02_32S), no RS485 register.
+  assert.deepEqual(s32.get('discharge.utp')?.meta.write, { link: 'ble', register: 0x3a, length: 1 });
+  assert.deepEqual(s32.get('discharge.utpr')?.meta.write, { link: 'ble', register: 0x3b, length: 1 });
+  assert.equal(spb.get('discharge.utp')?.readOnly, true);
+  assert.equal(s24.has('discharge.utp'), false);
   // Calibration and actions only where they are confirmed: JK02_32S over BLE.
   for (const id of ['calibration.voltage', 'jk.restart', 'jk.factory_reset', 'jk.soc_full', 'jk.emergency_on']) {
     assert.ok(s32.has(id), id);

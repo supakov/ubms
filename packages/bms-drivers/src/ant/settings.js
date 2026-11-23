@@ -74,6 +74,15 @@ function all(...checks) {
   };
 }
 
+/**
+ * Temperature registers (block 56): documented by the 2024 app map only, but the values read
+ * correctly on an ANT-BLE20PHUB (user report 2026-11-23), so they are written like the other
+ * u16/i16 registers; the session reads every write back.
+ */
+const TEMP_NOTE = msg('Read correctly on an ANT BMS; the write is checked by reading the value back.');
+const TEMP = { min: -40, max: 120, description: TEMP_NOTE };
+const BATTERY_ID_NOTE = msg('Up to 32 ASCII characters. The write is checked by reading the battery ID back.');
+
 const CELL_V = { min: 1, max: 4.5 };
 const CELL_DIFF = { min: 0.001, max: 2 };
 const PACK_V = { min: 1, max: 150 };
@@ -109,7 +118,33 @@ const packV = (label) => ({ label, group: 'pack_voltage', unit: 'V', decimals: 1
 /** @param {string} label */
 const amps = (label) => ({ label, group: 'current', unit: 'A', decimals: 1, ...CURRENT });
 /** @param {string} label */
-const degrees = (label) => ({ label, group: 'temperature', unit: '°C', decimals: 0 });
+const degrees = (label) => ({ label, group: 'temperature', unit: '°C', decimals: 0, ...TEMP });
+
+/**
+ * Pair of temperature registers: a limit and its recovery. High limits stay above their
+ * recovery, low limits below it.
+ * @param {string} id limit field id
+ * @param {string} recId recovery field id
+ * @param {'high'|'low'} kind
+ * @param {boolean} alarm alarm pair (other messages)
+ */
+const tempPair = (id, recId, kind, alarm = false) => {
+  const high = kind === 'high';
+  return {
+    limit: relation(id, high ? '>' : '<', recId, alarm ? (high ? ALARM_ABOVE_REC : ALARM_BELOW_REC) : high ? PROT_ABOVE_REC : PROT_BELOW_REC),
+    recovery: relation(recId, high ? '<' : '>', id, alarm ? (high ? REC_BELOW_ALARM : REC_ABOVE_ALARM) : high ? REC_BELOW_PROT : REC_ABOVE_PROT),
+  };
+};
+const T_CHARGE_HIGH = tempPair('charge.otp', 'charge.otpr', 'high');
+const T_DISCHARGE_HIGH = tempPair('discharge.otp', 'discharge.otpr', 'high');
+const T_MOS_HIGH = tempPair('mos.otp', 'mos.otpr', 'high');
+const T_CHARGE_LOW = tempPair('charge.utp', 'charge.utpr', 'low');
+const T_DISCHARGE_LOW = tempPair('discharge.utp', 'discharge.utpr', 'low');
+const A_CHARGE_HIGH = tempPair('ant.charge_ot_alarm', 'ant.charge_ot_alarm_recovery', 'high', true);
+const A_DISCHARGE_HIGH = tempPair('ant.discharge_ot_alarm', 'ant.discharge_ot_alarm_recovery', 'high', true);
+const A_MOS_HIGH = tempPair('ant.mos_ot_alarm', 'ant.mos_ot_alarm_recovery', 'high', true);
+const A_CHARGE_LOW = tempPair('ant.charge_ut_alarm', 'ant.charge_ut_alarm_recovery', 'low', true);
+const A_DISCHARGE_LOW = tempPair('ant.discharge_ut_alarm', 'ant.discharge_ut_alarm_recovery', 'low', true);
 
 /**
  * One-shot ANT_NEW action field.
@@ -229,27 +264,28 @@ export function buildAntSchema({ serial = false } = {}) {
       validate: relation('ant.pack_uv_alarm_recovery', '>', 'pack.uv_alarm', REC_ABOVE_ALARM),
     }),
 
-    // Temperature (block 56): documented by the 2024 app only, signedness unverified (spec 7.1).
-    roReg('charge.otp', { address: 56 }, { decimals: 0 }),
-    roReg('charge.otpr', { address: 58 }, { decimals: 0 }),
-    roReg('discharge.otp', { address: 60 }, { decimals: 0 }),
-    roReg('discharge.otpr', { address: 62 }, { decimals: 0 }),
-    roReg('mos.otp', { address: 64 }, { decimals: 0 }),
-    roReg('mos.otpr', { address: 66 }, { decimals: 0 }),
-    roReg('charge.utp', { address: 68, signed: true }, { decimals: 0 }),
-    roReg('charge.utpr', { address: 70, signed: true }, { decimals: 0 }),
-    roReg('discharge.utp', { address: 72, signed: true }, { decimals: 0 }),
-    roReg('discharge.utpr', { address: 74, signed: true }, { decimals: 0 }),
-    roReg('ant.charge_ot_alarm', { address: 76, signed: true }, degrees(msg('Charge high temperature alarm'))),
-    roReg('ant.charge_ot_alarm_recovery', { address: 78, signed: true }, { ...degrees(msg('Charge high temperature alarm recovery')), advanced: true }),
-    roReg('ant.discharge_ot_alarm', { address: 80, signed: true }, degrees(msg('Discharge high temperature alarm'))),
-    roReg('ant.discharge_ot_alarm_recovery', { address: 82, signed: true }, { ...degrees(msg('Discharge high temperature alarm recovery')), advanced: true }),
-    roReg('ant.mos_ot_alarm', { address: 84, signed: true }, degrees(msg('MOSFET high temperature alarm'))),
-    roReg('ant.mos_ot_alarm_recovery', { address: 86, signed: true }, { ...degrees(msg('MOSFET high temperature alarm recovery')), advanced: true }),
-    roReg('ant.charge_ut_alarm', { address: 88, signed: true }, degrees(msg('Charge low temperature alarm'))),
-    roReg('ant.charge_ut_alarm_recovery', { address: 90, signed: true }, { ...degrees(msg('Charge low temperature alarm recovery')), advanced: true }),
-    roReg('ant.discharge_ut_alarm', { address: 92, signed: true }, degrees(msg('Discharge low temperature alarm'))),
-    roReg('ant.discharge_ut_alarm_recovery', { address: 94, signed: true }, { ...degrees(msg('Discharge low temperature alarm recovery')), advanced: true }),
+    // Temperature (block 56): documented by the 2024 app map; read correctly on hardware and
+    // writable since 2026-11-23 (see TEMP_NOTE, spec 7.1). High protections u16, the rest i16.
+    reg('charge.otp', { address: 56 }, { decimals: 0, ...TEMP, validate: T_CHARGE_HIGH.limit }),
+    reg('charge.otpr', { address: 58 }, { decimals: 0, ...TEMP, validate: T_CHARGE_HIGH.recovery }),
+    reg('discharge.otp', { address: 60 }, { decimals: 0, ...TEMP, validate: T_DISCHARGE_HIGH.limit }),
+    reg('discharge.otpr', { address: 62 }, { decimals: 0, ...TEMP, validate: T_DISCHARGE_HIGH.recovery }),
+    reg('mos.otp', { address: 64 }, { decimals: 0, ...TEMP, validate: T_MOS_HIGH.limit }),
+    reg('mos.otpr', { address: 66 }, { decimals: 0, ...TEMP, validate: T_MOS_HIGH.recovery }),
+    reg('charge.utp', { address: 68, signed: true }, { decimals: 0, ...TEMP, validate: T_CHARGE_LOW.limit }),
+    reg('charge.utpr', { address: 70, signed: true }, { decimals: 0, ...TEMP, validate: T_CHARGE_LOW.recovery }),
+    reg('discharge.utp', { address: 72, signed: true }, { decimals: 0, ...TEMP, validate: T_DISCHARGE_LOW.limit }),
+    reg('discharge.utpr', { address: 74, signed: true }, { decimals: 0, ...TEMP, validate: T_DISCHARGE_LOW.recovery }),
+    reg('ant.charge_ot_alarm', { address: 76, signed: true }, { ...degrees(msg('Charge high temperature alarm')), validate: A_CHARGE_HIGH.limit }),
+    reg('ant.charge_ot_alarm_recovery', { address: 78, signed: true }, { ...degrees(msg('Charge high temperature alarm recovery')), advanced: true, validate: A_CHARGE_HIGH.recovery }),
+    reg('ant.discharge_ot_alarm', { address: 80, signed: true }, { ...degrees(msg('Discharge high temperature alarm')), validate: A_DISCHARGE_HIGH.limit }),
+    reg('ant.discharge_ot_alarm_recovery', { address: 82, signed: true }, { ...degrees(msg('Discharge high temperature alarm recovery')), advanced: true, validate: A_DISCHARGE_HIGH.recovery }),
+    reg('ant.mos_ot_alarm', { address: 84, signed: true }, { ...degrees(msg('MOSFET high temperature alarm')), validate: A_MOS_HIGH.limit }),
+    reg('ant.mos_ot_alarm_recovery', { address: 86, signed: true }, { ...degrees(msg('MOSFET high temperature alarm recovery')), advanced: true, validate: A_MOS_HIGH.recovery }),
+    reg('ant.charge_ut_alarm', { address: 88, signed: true }, { ...degrees(msg('Charge low temperature alarm')), validate: A_CHARGE_LOW.limit }),
+    reg('ant.charge_ut_alarm_recovery', { address: 90, signed: true }, { ...degrees(msg('Charge low temperature alarm recovery')), advanced: true, validate: A_CHARGE_LOW.recovery }),
+    reg('ant.discharge_ut_alarm', { address: 92, signed: true }, { ...degrees(msg('Discharge low temperature alarm')), validate: A_DISCHARGE_LOW.limit }),
+    reg('ant.discharge_ut_alarm_recovery', { address: 94, signed: true }, { ...degrees(msg('Discharge low temperature alarm recovery')), advanced: true, validate: A_DISCHARGE_LOW.recovery }),
 
     // Current (block 104, E B Y; 104..110 also written in captures).
     reg('charge.ocp', { address: 104, scale: 0.1 }, CURRENT),
@@ -360,12 +396,12 @@ export function buildAntSchema({ serial = false } = {}) {
     reg('ant.slave_modules', { address: 382 }, { label: msg('Number of slave modules'), group: 'system', decimals: 0, min: 0, max: 255, advanced: true }),
 
     // Identity.
-    roReg('ant.pack_id', { address: ADDR.PACK_ID, size: 32, format: 'ascii' }, {
+    reg('ant.pack_id', { address: ADDR.PACK_ID, size: 32, format: 'ascii' }, {
       label: msg('Battery ID'),
       group: 'identity',
       type: 'text',
       maxLength: 32,
-      description: msg('Writing the battery ID is not confirmed yet, so it is shown but never written.'),
+      description: BATTERY_ID_NOTE,
     }),
     passwordField(
       msg(
@@ -494,6 +530,29 @@ export function rawToValue(meta, raw, decimals = 3) {
 
 /**
  * Raw register value for an engineering value. Throws when the value cannot be encoded.
+ * @param {RegisterMeta} meta
+ * @param {number} value
+ * @returns {number}
+ */
+/**
+ * NUL padded ASCII bytes of a text register (battery ID). Printable ASCII only, at most the
+ * register size.
+ * @param {RegisterMeta} meta
+ * @param {string} value
+ * @returns {Uint8Array}
+ */
+export function asciiToBytes(meta, value) {
+  const text = String(value ?? '');
+  if (!/^[\x20-\x7e]*$/.test(text)) throw new Error(msg('Only ASCII letters, digits and symbols are allowed'));
+  const size = meta.size ?? 2;
+  if (text.length > size) throw new Error(msg('The text is too long'));
+  const bytes = new Uint8Array(size);
+  for (let i = 0; i < text.length; i++) bytes[i] = text.charCodeAt(i);
+  return bytes;
+}
+
+/**
+ * Raw register value of an engineering value.
  * @param {RegisterMeta} meta
  * @param {number} value
  * @returns {number}

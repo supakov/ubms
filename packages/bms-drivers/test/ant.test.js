@@ -488,15 +488,21 @@ test('settings schema: ids, safety rules, conversions and relations', () => {
     if (f.type === 'number' && !f.readOnly) assert.ok(Number.isFinite(f.min) && Number.isFinite(f.max), `${f.id} has limits`);
     if (f.type === 'action') assert.equal(f.group, 'actions');
   }
-  // Only registers confirmed by two sources are writable (spec 7.1).
+  // Registers confirmed by two sources are writable (spec 7.1), plus the temperature block and
+  // the battery ID, which read correctly on hardware (2026-11-23).
+  const temperatures = Array.from({ length: 20 }, (_, i) => 56 + 2 * i);
   const writable = fields.filter((f) => f.meta?.kind === 'register' && !f.readOnly).map((f) => f.meta.address);
   assert.deepEqual(
     writable.sort((a, b) => a - b),
-    [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 104, 106, 108, 110, 112, 114, 116, 118, 124, 126, 128, 130, 132, 134, 140, 142, 144, 146, 150, 154, 158, 160, 378, 380, 382],
+    [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, ...temperatures, 104, 106, 108, 110, 112, 114, 116, 118, 124, 126, 128, 130, 132, 134, 140, 142, 144, 146, 150, 154, 158, 160, P.ADDR.PACK_ID, 378, 380, 382],
   );
   const readOnly = new Set(fields.filter((f) => f.meta?.kind === 'register' && f.readOnly).map((f) => f.meta.address));
-  for (let a = 56; a <= 94; a += 2) assert.ok(readOnly.has(a), `temperature register ${a} is read only`);
-  for (const a of [148, 156, 162, 166, 174, 194, P.ADDR.PACK_ID]) assert.ok(readOnly.has(a), `register ${a} is read only`);
+  for (const a of [148, 156, 162, 166, 174, 194]) assert.ok(readOnly.has(a), `register ${a} is read only`);
+  // Temperature limits stay on the right side of their recovery values.
+  const temp = validateAll(schema, { 'charge.otp': 50, 'charge.otpr': 55, 'discharge.utp': 5, 'discharge.utpr': -5, 'ant.mos_ot_alarm': 80, 'ant.mos_ot_alarm_recovery': 70 });
+  assert.ok(temp['charge.otp'] && temp['charge.otpr'], 'high protection above its recovery');
+  assert.ok(temp['discharge.utp'] && temp['discharge.utpr'], 'low protection below its recovery');
+  assert.equal(temp['ant.mos_ot_alarm'], undefined);
   assert.ok(!fields.some((f) => f.meta?.kind === 'register' && f.meta.address === 152), 'cell type register (encoding unverified) is not exposed');
   assert.deepEqual(
     legacy
@@ -739,12 +745,32 @@ test('session: ANT 2021+ protocol end to end (snapshot, info, settings, writes, 
     // Validation and read-only rules.
     r = await session.writeSettings([
       { id: 'cell.ovp', value: 9 },
-      { id: 'charge.otp', value: 50 },
+      { id: 'capacity.nominal', value: 100 },
     ]);
     assert.deepEqual(
       r.map((x) => x.ok),
       [false, false],
     );
+
+    // Temperatures and the battery ID are written and read back.
+    r = await session.writeSettings([
+      { id: 'charge.otp', value: 50 },
+      { id: 'discharge.utp', value: -15 },
+      { id: 'ant.pack_id', value: 'Garage 48V' },
+    ]);
+    assert.deepEqual(
+      r.map((x) => [x.id, x.ok, x.verified]),
+      [
+        ['charge.otp', true, true],
+        ['discharge.utp', true, true],
+        ['ant.pack_id', true, true],
+      ],
+    );
+    assert.equal(session.settings.values?.['ant.pack_id'], 'Garage 48V');
+    const idWrite = sim.received.findLast((f) => f[0] === 0x7e && f[2] === P.FN.WRITE && (f[3] | (f[4] << 8)) === P.ADDR.PACK_ID);
+    assert.equal(idWrite?.[5], 32, 'the whole 32 byte battery ID is written, NUL padded');
+    r = await session.writeSettings([{ id: 'ant.pack_id', value: 'Ünicode' }]);
+    assert.equal(r[0].ok, false, 'non ASCII text is refused');
 
     // Switch off with verification, then on again like the overview toggle (no reload).
     r = await session.writeSettings([{ id: 'switch.charge', value: false }]);

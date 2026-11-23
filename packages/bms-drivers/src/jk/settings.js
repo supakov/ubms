@@ -400,9 +400,11 @@ export function buildJkSchema({ variant = VARIANT.JK02_32S, link = 'ble', cellCo
   reg('discharge.otpr', 'dischargeOtpr', { min: 30, max: 80, validate: relation('discharge.otpr', '<', 'discharge.otp', REC_BELOW_PROT) });
   reg('charge.utp', 'chargeUtp', { min: -45, max: 20, validate: relation('charge.utp', '<', 'charge.utpr', PROT_BELOW_REC) });
   reg('charge.utpr', 'chargeUtpr', { min: -45, max: 20, validate: relation('charge.utpr', '>', 'charge.utp', REC_ABOVE_PROT) });
-  // Plausible in three captures, but the write of 0x3A / 0x3B is unverified (spec 6.2).
-  reg('discharge.utp', 'dischargeUtp', { decimals: 0 }, { ro: true, reason: UNCONFIRMED });
-  reg('discharge.utpr', 'dischargeUtpr', { decimals: 0 }, { ro: true, reason: UNCONFIRMED });
+  // Plausible in three captures; the write of 0x3A / 0x3B (one signed byte, like the heating
+  // temperatures 0x37 / 0x38) is enabled at the user's request (2026-11-23) and checked by the
+  // read-back of every write (spec 6.2, 7.3). No RS485 register: read only on JK-PB RS485.
+  reg('discharge.utp', 'dischargeUtp', { decimals: 0, min: -40, max: 20, validate: relation('discharge.utp', '<', 'discharge.utpr', PROT_BELOW_REC) });
+  reg('discharge.utpr', 'dischargeUtpr', { decimals: 0, min: -40, max: 25, validate: relation('discharge.utpr', '>', 'discharge.utp', REC_ABOVE_PROT) });
   reg('mos.otp', 'mosOtp', { min: 50, max: 110, validate: relation('mos.otp', '>', 'mos.otpr', PROT_ABOVE_REC) });
   reg('mos.otpr', 'mosOtpr', { min: 50, max: 110, validate: relation('mos.otpr', '<', 'mos.otp', REC_BELOW_PROT) });
   // PB register 0x1116 holds both bytes; their order is inferred (spec 6.2).

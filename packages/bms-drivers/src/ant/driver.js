@@ -50,8 +50,10 @@ import {
   parseReadResponse,
   parseStatus,
   parseWriteResponse,
+  newWriteBytesRequest,
 } from './protocol.js';
 import {
+  asciiToBytes,
   DEFAULT_PASSWORDS,
   NEW_SETTING_BLOCKS,
   buildAntLegacySchema,
@@ -772,6 +774,18 @@ export class AntDriver extends BaseDriver {
         return;
       }
       if (meta.kind !== 'register') throw new Error(msg('Unknown setting'));
+      if (meta.format === 'ascii') {
+        // Text register (battery ID): NUL padded bytes, echoed byte for byte.
+        const bytes = asciiToBytes(meta, value);
+        await this.#authenticate();
+        const echo = await this.#request(newWriteBytesRequest(meta.address, bytes), (fr) => fr[2] === RSP.WRITE && u16le(fr, 3) === meta.address, {
+          timeout: 1500,
+          retries: 1,
+        });
+        if (!equals(parseWriteResponse(echo).data, bytes)) throw new Error(msg('The BMS did not confirm the written value'));
+        await this.#control(CONTROL.SAVE);
+        return;
+      }
       const raw = valueToRaw(meta, Number(value));
       await this.#authenticate();
       const echo = await this.#request(newWriteRequest(meta.address, raw, meta.size), (fr) => fr[2] === RSP.WRITE && u16le(fr, 3) === meta.address, {

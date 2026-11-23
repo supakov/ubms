@@ -527,7 +527,7 @@ Same layout for both JK02 variants up to byte 141. All values LE. "BLE reg" is t
 | 286 (0x11E) | 1 | u8 | h | `smartSleepDelay` | 0x39, length 1 | 0x1118, high byte | [SY], [BM], [JKMB] TIMSmartSleep |
 | 287 (0x11F) | 1 | u8 | | `dataFieldEnable0`, unknown flags (0xFE in a v19 capture) | | | [SY]; non-zero on 32S, used by [DSB] as 32S detector |
 | 288 (0x120) | 8 | | | unknown | | | |
-| 296 (0x128) | 1 | i8 | °C | `dischargeUtp` | 0x3A, length 1 | | [SY]; plausible in 3 captures (−10, −35, 0), write **unverified** |
+| 296 (0x128) | 1 | i8 | °C | `dischargeUtp` | 0x3A, length 1 | | [SY]; plausible in 3 captures (−10, −35, 0), write **unverified** by captures; ubms writes it since 2026-11-23 and checks the read-back |
 | 297 (0x129) | 1 | i8 | °C | `dischargeUtpr` | 0x3B, length 1 | | same (−5, −30, 0) |
 | 298 (0x12A) | 1 | | | unknown | | | |
 | 299 (0x12B) | 1 | u8 | | sum8 | | | |

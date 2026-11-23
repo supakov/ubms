@@ -41,6 +41,9 @@ and electronic loads.
 | `deye-can` | Deye batteries over the inverter CAN bus (Pylontech style frames) through an SLCAN USB-CAN adapter; chosen explicitly, never auto-detected | CAN (SLCAN adapter) | read only |
 
 Parameters whose encoding is not confirmed by captures or vendor documents are shown read only.
+
+Tested with real devices (2026-11-23): connecting and reading ANT (ANT-BLE20PHUB), Daly, JK and JBD
+BMS. Logins with passwords other than the built-in defaults have not been tested yet.
 Most drivers ship a simulator, so the demo mode shows their protocol without hardware (all except
 `jk-balancer-ble`, `jk-pb-rs485`, `jk-uart` and `ant-legacy`). See
 [docs/protocols](docs/protocols/) for the details and sources.

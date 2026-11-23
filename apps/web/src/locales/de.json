@@ -910,7 +910,6 @@
   "Writes 1 to register 0x00F1 (value taken from one implementation). The BMS stops answering.": "Schreibt 1 in Register 0x00F1 (Wert aus einer einzelnen Implementierung übernommen). Das BMS antwortet danach nicht mehr.",
   "Writes 1 to register 0x00F2 (value taken from one implementation). Run it only while no current flows.": "Schreibt 1 in Register 0x00F2 (Wert aus einer einzelnen Implementierung übernommen). Nur ausführen, wenn kein Strom fließt.",
   "Writing settings is not supported by this driver": "Dieser Treiber unterstützt kein Schreiben von Einstellungen",
-  "Writing the battery ID is not confirmed yet, so it is shown but never written.": "Das Schreiben der Batterie-ID ist noch nicht bestätigt, daher wird sie nur angezeigt und nie geschrieben.",
   "Writing…": "Wird geschrieben…",
   "Written, but the device reports {value}": "Geschrieben, aber das Gerät meldet {value}",
   "Written, but the device reports a different value for: {list}": "Geschrieben, aber das Gerät meldet einen anderen Wert für: {list}",
@@ -1625,5 +1624,14 @@
   "Serial write timed out": "Zeitüberschreitung beim seriellen Schreiben",
   "Serial port closed": "Serieller Port geschlossen",
   "Serial port disconnected": "Serieller Port getrennt",
-  "Serial stream ended": "Serieller Datenstrom beendet"
+  "Serial stream ended": "Serieller Datenstrom beendet",
+  "Connect another device": "Anderes Gerät verbinden",
+  "From": "Von",
+  "To": "Bis",
+  "Period": "Zeitraum",
+  "The start must be before the end": "Der Beginn muss vor dem Ende liegen",
+  "Only ASCII letters, digits and symbols are allowed": "Nur ASCII-Buchstaben, Ziffern und Zeichen sind erlaubt",
+  "The text is too long": "Der Text ist zu lang",
+  "Read correctly on an ANT BMS; the write is checked by reading the value back.": "Wird auf einem ANT-BMS korrekt gelesen; das Schreiben wird durch Zurücklesen des Werts geprüft.",
+  "Up to 32 ASCII characters. The write is checked by reading the battery ID back.": "Bis zu 32 ASCII-Zeichen. Das Schreiben wird durch Zurücklesen der Batterie-ID geprüft."
 }

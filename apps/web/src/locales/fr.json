@@ -916,7 +916,6 @@
   "Writes 1 to register 0x00F1 (value taken from one implementation). The BMS stops answering.": "Écrit 1 dans le registre 0x00F1 (valeur reprise d'une implémentation). Le BMS cesse de répondre.",
   "Writes 1 to register 0x00F2 (value taken from one implementation). Run it only while no current flows.": "Écrit 1 dans le registre 0x00F2 (valeur reprise d'une implémentation). À exécuter uniquement lorsqu'aucun courant ne circule.",
   "Writing settings is not supported by this driver": "Ce pilote ne prend pas en charge l'écriture des paramètres",
-  "Writing the battery ID is not confirmed yet, so it is shown but never written.": "L'écriture de l'identifiant de la batterie n'est pas encore confirmée : il est affiché mais jamais écrit.",
   "Writing…": "Écriture…",
   "Written, but the device reports {value}": "Écrit, mais l'appareil indique {value}",
   "Written, but the device reports a different value for: {list}": "Écrit, mais l'appareil indique une valeur différente pour : {list}",
@@ -1631,5 +1630,14 @@
   "Serial write timed out": "Délai dépassé lors de l'écriture série",
   "Serial port closed": "Port série fermé",
   "Serial port disconnected": "Port série déconnecté",
-  "Serial stream ended": "Flux série terminé"
+  "Serial stream ended": "Flux série terminé",
+  "Connect another device": "Connecter un autre appareil",
+  "From": "Du",
+  "To": "Au",
+  "Period": "Période",
+  "The start must be before the end": "Le début doit précéder la fin",
+  "Only ASCII letters, digits and symbols are allowed": "Seuls les lettres ASCII, les chiffres et les symboles sont autorisés",
+  "The text is too long": "Le texte est trop long",
+  "Read correctly on an ANT BMS; the write is checked by reading the value back.": "Lu correctement sur un BMS ANT ; l'écriture est vérifiée en relisant la valeur.",
+  "Up to 32 ASCII characters. The write is checked by reading the battery ID back.": "Jusqu'à 32 caractères ASCII. L'écriture est vérifiée en relisant l'ID de la batterie."
 }

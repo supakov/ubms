@@ -922,7 +922,6 @@
   "Writes 1 to register 0x00F1 (value taken from one implementation). The BMS stops answering.": "Записывает 1 в регистр 0x00F1 (значение взято из одной реализации). BMS перестаёт отвечать.",
   "Writes 1 to register 0x00F2 (value taken from one implementation). Run it only while no current flows.": "Записывает 1 в регистр 0x00F2 (значение взято из одной реализации). Выполняйте, только когда ток не течёт.",
   "Writing settings is not supported by this driver": "Этот драйвер не поддерживает запись настроек",
-  "Writing the battery ID is not confirmed yet, so it is shown but never written.": "Запись идентификатора батареи ещё не подтверждена, поэтому он только отображается и не записывается.",
   "Writing…": "Запись…",
   "Written, but the device reports {value}": "Записано, но устройство сообщает {value}",
   "Written, but the device reports a different value for: {list}": "Записано, но устройство сообщает другие значения настроек: {list}",
@@ -1637,5 +1636,14 @@
   "Serial write timed out": "Истекло время ожидания записи в порт",
   "Serial port closed": "Последовательный порт закрыт",
   "Serial port disconnected": "Последовательный порт отключён",
-  "Serial stream ended": "Поток последовательного порта завершился"
+  "Serial stream ended": "Поток последовательного порта завершился",
+  "Connect another device": "Подключить другое устройство",
+  "From": "С",
+  "To": "По",
+  "Period": "Период",
+  "The start must be before the end": "Начало должно быть раньше конца",
+  "Only ASCII letters, digits and symbols are allowed": "Допустимы только буквы ASCII, цифры и символы",
+  "The text is too long": "Текст слишком длинный",
+  "Read correctly on an ANT BMS; the write is checked by reading the value back.": "Корректно читается на ANT BMS; запись проверяется обратным чтением значения.",
+  "Up to 32 ASCII characters. The write is checked by reading the battery ID back.": "До 32 символов ASCII. Запись проверяется обратным чтением ID батареи."
 }

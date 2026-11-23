@@ -606,6 +606,24 @@ const scenarios = [
     },
   ],
   [
+    'overview-other-device-phone',
+    {
+      ...phone,
+      hash: '/connect',
+      steps: [
+        { eval: `window.ubms.connectDemo('jbd').then(() => window.ubms.state.state === 'connected')`, hash: '/overview', wait: 2500 },
+        {
+          // The quiet button at the end of the overview disconnects and opens the connect screen.
+          eval: `(() => { const b = document.querySelector('ubms-app').shadowRoot.querySelector('view-overview').shadowRoot.querySelector('.other-device button'); b.scrollIntoView(); return !!b; })()`,
+          wait: 400,
+          shot: 'overview-other-device-phone',
+        },
+        { eval: `(document.querySelector('ubms-app').shadowRoot.querySelector('view-overview').shadowRoot.querySelector('.other-device button').click(), true)`, wait: 1500 },
+        { eval: `window.ubms.state.state === 'idle' && location.hash === '#/connect'` },
+      ],
+    },
+  ],
+  [
     'settings-login-phone',
     {
       ...phone,
@@ -662,6 +680,19 @@ const scenarios = [
         { eval: `(window.ubms.setPref('chartRange', 'all'), window.ubms.setPref('chartCells', 'all'), true)`, wait: 1200 },
         { eval: chartsDrawn(4) },
         { eval: chartsAligned },
+        {
+          // Period: a fixed window from 40 to 20 minutes ago inside the stored hour.
+          eval: `(() => { const now = Date.now(); window.ubms.setPref('chartFrom', now - 40 * 60000); window.ubms.setPref('chartTo', now - 20 * 60000); window.ubms.setPref('chartCells', 'summary'); window.ubms.setPref('chartRange', 'custom'); return true; })()`,
+          wait: 1200,
+          shot: 'charts-period-phone',
+        },
+        { eval: chartsDrawn(4) },
+        { eval: `${chartsView}.shadowRoot.querySelectorAll('.period input[type=datetime-local]').length === 2` },
+        {
+          // Every exported row lies inside the period (about 300 records of 4 s).
+          eval: `(() => { const rows = ${chartsView}.buildCsv().split(String.fromCharCode(13, 10)).filter(Boolean).slice(1); const now = Date.now(); const ts = rows.map((r) => Number(r.split(',')[1])); return rows.length > 250 && rows.length < 330 && ts.every((t) => t >= now - 41 * 60000 && t <= now - 19 * 60000); })()`,
+        },
+        { eval: `(window.ubms.setPref('chartRange', 'all'), window.ubms.setPref('chartCells', 'all'), true)`, wait: 900 },
         {
           // A device that was disconnected with nothing stored: an empty state, not another battery.
           eval: `(() => { const v = ${chartsView}; v.gone = { key: 'sn:smoke:gone', name: 'Gone BMS' }; v.selected = 'stored:sn:smoke:gone'; return true; })()`,

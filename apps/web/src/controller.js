@@ -54,7 +54,10 @@ export const LANGUAGES = [
  * @property {boolean} historyEnabled store the readings for the Charts view
  * @property {number} historyIntervalMs time between two history records
  * @property {number} historyRetentionDays delete older records when a device connects, 0 keeps everything
- * @property {string} chartRange Charts view range: '5m', '10m', '15m', '30m', '1h', '2h' or 'all'
+ * @property {string} chartRange Charts view range: '5m', '10m', '15m', '30m', '1h', '2h', 'all' or
+ *   'custom' (chartFrom to chartTo)
+ * @property {number} chartFrom start of the custom range, epoch ms (0: not set yet)
+ * @property {number} chartTo end of the custom range, epoch ms (0: not set yet)
  * @property {string[]} chartHidden chart groups switched off in the Charts view
  * @property {'summary'|'all'} chartCells cell chart: lowest, highest and average, or every cell
  *
@@ -102,6 +105,8 @@ const DEFAULT_PREFS = /** @type {Prefs} */ ({
   historyIntervalMs: 2000,
   historyRetentionDays: 0,
   chartRange: '15m',
+  chartFrom: 0,
+  chartTo: 0,
   chartHidden: ['power', 'capacity'],
   chartCells: 'summary',
 });

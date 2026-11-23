@@ -19,7 +19,7 @@ after disconnecting it returns to Connect (Charts and Log stay open).
 | Route | Screen | Content |
 | --- | --- | --- |
 | `#/connect` | Connect | Connection type (Bluetooth, Serial, Demo), BMS type (auto, brand, protocol), chooser options, browser support notices, detection progress, recent devices. |
-| `#/overview` | Overview | SOC ring and state, voltage, current, power, remaining capacity; alarms; switches (toggles when the driver can write them); cell summary with bars; temperatures; battery details (cycles, SOH, capacities, time to full or empty); 10 minute trend; driver specific values. |
+| `#/overview` | Overview | SOC ring and state, voltage, current, power, remaining capacity; alarms; switches (toggles when the driver can write them); cell summary with bars; temperatures; battery details (cycles, SOH, capacities, time to full or empty); 10 minute trend; driver specific values; at the end a quiet "Connect another device" button that disconnects and opens Connect in one step. |
 | `#/cells` | Cells | Count, average, min, max, delta, balancer state; a tile per cell with voltage or deviation from average, balancing flag, connection resistance; min and max highlighted. |
 | `#/charts` | Charts | Recorded readings of the connected device (live) and of every device with stored history. Device picker, range (5, 10, 15, 30 min, 1 h, 2 h, All), value chips, one chart card per group with a shared crosshair, export CSV and PNG, clear the history of a device, where and how much is stored. See below. |
 | `#/settings` | Settings groups | Generated from the driver schema. Toolbar: reload, export to JSON, import from JSON (shown as pending changes). |
@@ -39,7 +39,10 @@ after disconnecting it returns to Connect (Charts and Log stay open).
 - **Range**: segmented control with localized short durations (5 min to 2 h) and All, remembered
   in the preferences. Live ranges end at the current time and move with the clock; a stored
   device's range ends at its last record; All shows everything stored plus the readings of the
-  current connection that are not written yet.
+  current connection that are not written yet. Period shows From and To fields (local date and
+  time, remembered in the preferences as chartFrom and chartTo): a fixed window that does not
+  move with the clock; new readings of the connection appear when they fall inside it. It starts
+  with the window shown before, and the CSV and PNG exports use it like any other range.
 - **Values**: chips for the groups that have data (voltage, current, power, state of charge, cell
   voltages, cell difference, temperatures, balance current, remaining capacity, and the extra
   values a driver marks with `chart`, such as energy, capacity and duration of Atorch meters,

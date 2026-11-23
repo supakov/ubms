@@ -59,7 +59,24 @@ export const CHART_RANGES = [
   { id: '1h', ms: 60 * MINUTE },
   { id: '2h', ms: 120 * MINUTE },
   { id: 'all', ms: 0 },
+  // From and to chosen by the user (prefs chartFrom, chartTo); a fixed window, never moving.
+  { id: 'custom', ms: 0, custom: true },
 ];
+
+/** Value of an <input type="datetime-local"> for epoch ms, in local time. @param {number} ms */
+export function toLocalInput(ms) {
+  if (!Number.isFinite(ms) || ms <= 0) return '';
+  const d = new Date(ms);
+  const p = (/** @type {number} */ n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/** Epoch ms of an <input type="datetime-local"> value (local time); NaN when empty or invalid. @param {string} v */
+export function fromLocalInput(v) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(String(v ?? ''));
+  if (!m) return NaN;
+  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime();
+}
 
 /**
  * Above this many records the points are aggregated (first, lowest, highest and last value per
@@ -216,6 +233,7 @@ const fileStem = (s) => s.replace(/[\s<>:"/\\|?*\u0000-\u001f\u007f]+/g, '_').re
 /** Range label: localized short durations ("5 min", "1 h") without translation keys. */
 /** @param {{ id: string, ms: number }} r */
 function rangeLabel(r) {
+  if (/** @type {any} */ (r).custom) return t('Period');
   if (!r.ms) return t('All');
   const minutes = r.ms / MINUTE;
   const hours = minutes >= 60 && minutes % 60 === 0;
@@ -228,6 +246,7 @@ function rangeLabel(r) {
 
 export class ViewCharts extends UiElement {
   static properties = {
+    rangeError: { state: true },
     ctrl: { attribute: false },
     selected: { state: true },
     devices: { state: true },
@@ -302,6 +321,30 @@ export class ViewCharts extends UiElement {
         display: flex;
         gap: 6px;
         margin-left: auto;
+      }
+      .period {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 8px 12px;
+        margin-bottom: 12px;
+      }
+      .period label {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1 1 180px;
+        max-width: 260px;
+        font-size: 0.78rem;
+        color: var(--ui-text-muted);
+      }
+      .period .input {
+        min-height: 36px;
+      }
+      .period-error {
+        flex-basis: 100%;
+        font-size: 0.82rem;
+        color: var(--ui-danger);
       }
       .chips {
         display: flex;
@@ -470,12 +513,15 @@ export class ViewCharts extends UiElement {
     this.gone = { key: '', name: '' };
     /** @type {{ key: string, cards: any[] } | null} */
     this.cardCache = null;
+    this.rangeError = '';
   }
 
   connectedCallback() {
     super.connectedCallback();
     this.sc = new StoreController(this, this.ctrl.store, (s) => ({
       range: s.prefs.chartRange,
+      from: s.prefs.chartFrom,
+      to: s.prefs.chartTo,
       hidden: s.prefs.chartHidden,
       cells: s.prefs.chartCells,
       enabled: s.prefs.historyEnabled,
@@ -534,7 +580,8 @@ export class ViewCharts extends UiElement {
   #onStore(s, prev) {
     const rec = s.recording;
     const old = prev.recording;
-    if (s.prefs.chartRange !== prev.prefs.chartRange) {
+    const custom = s.prefs.chartRange === 'custom';
+    if (s.prefs.chartRange !== prev.prefs.chartRange || (custom && (s.prefs.chartFrom !== prev.prefs.chartFrom || s.prefs.chartTo !== prev.prefs.chartTo))) {
       this.#load();
       return;
     }
@@ -645,7 +692,64 @@ export class ViewCharts extends UiElement {
 
   /** The window moves with the clock: a live source and a fixed range. */
   #isLiveWindow() {
-    return this.data?.sourceId === 'live';
+    return this.data?.sourceId === 'live' && !this.#custom();
+  }
+
+  /** The chosen custom window, or null when another range is selected or it is not set. */
+  #custom() {
+    const p = this.ctrl.state.prefs;
+    if (p.chartRange !== 'custom') return null;
+    const from = Number(p.chartFrom);
+    const to = Number(p.chartTo);
+    return Number.isFinite(from) && Number.isFinite(to) && from > 0 && to > from ? { from, to } : null;
+  }
+
+  /**
+   * Select a range. 'Period' starts with the window shown now (or the last two hours), so the
+   * from and to fields open with sensible values.
+   * @param {{ id: string, ms: number, custom?: boolean }} r
+   */
+  #pickRange(r) {
+    if (r.custom && !this.#custom()) {
+      const { from, to } = this.#window();
+      const end = Number.isFinite(to) ? to : Date.now();
+      const start = Number.isFinite(from) && from < end ? from : end - 120 * MINUTE;
+      this.ctrl.setPref('chartFrom', Math.floor(start / MINUTE) * MINUTE);
+      this.ctrl.setPref('chartTo', Math.ceil(end / MINUTE) * MINUTE);
+    }
+    this.ctrl.setPref('chartRange', r.id);
+  }
+
+  /** @param {'from'|'to'} which @param {Event} e */
+  #setBound(which, e) {
+    const input = /** @type {HTMLInputElement} */ (e.target);
+    const ms = fromLocalInput(input.value);
+    const p = this.ctrl.state.prefs;
+    const from = which === 'from' ? ms : Number(p.chartFrom);
+    const to = which === 'to' ? ms : Number(p.chartTo);
+    if (!Number.isFinite(ms) || !(to > from)) {
+      this.rangeError = t('The start must be before the end');
+      return;
+    }
+    this.rangeError = '';
+    this.ctrl.setPref(which === 'from' ? 'chartFrom' : 'chartTo', ms);
+  }
+
+  /** From and to fields of the custom range. */
+  #customBar() {
+    if (this.#range().id !== 'custom') return nothing;
+    const p = this.ctrl.state.prefs;
+    return html`<div class="period">
+      <label>
+        <span>${t('From')}</span>
+        <input class="input" type="datetime-local" .value=${toLocalInput(Number(p.chartFrom))} @change=${(/** @type {Event} */ e) => this.#setBound('from', e)} />
+      </label>
+      <label>
+        <span>${t('To')}</span>
+        <input class="input" type="datetime-local" .value=${toLocalInput(Number(p.chartTo))} @change=${(/** @type {Event} */ e) => this.#setBound('to', e)} />
+      </label>
+      ${this.rangeError ? html`<span class="period-error" role="alert">${this.rangeError}</span>` : nothing}
+    </div>`;
   }
 
   async #load() {
@@ -665,7 +769,20 @@ export class ViewCharts extends UiElement {
       let records;
       let liveId = 0;
       let epoch = 0;
-      if (src.kind === 'live') {
+      const custom = this.#custom();
+      if (range.custom && !custom) {
+        records = [];
+      } else if (custom) {
+        // A fixed window: the store, plus the readings of the connection not written yet.
+        const live = src.kind === 'live' ? this.ctrl.recorder.live : null;
+        const key = src.kind === 'live' ? live?.key : src.key;
+        const stored = key ? /** @type {HistoryRecord[]} */ (await (live?.store ?? src.store).read(key, custom)) : [];
+        if (seq !== this.loadSeq) return;
+        const tail = (live?.tail ?? []).filter((r) => r.t >= custom.from && r.t <= custom.to);
+        records = live ? mergeRecords(stored, tail) : stored;
+        liveId = live?.id ?? 0;
+        epoch = live?.epoch ?? 0;
+      } else if (src.kind === 'live') {
         const first = this.ctrl.recorder.live;
         if (!range.ms && first?.key) {
           // Everything stored plus what the recorder has not written yet.
@@ -731,6 +848,14 @@ export class ViewCharts extends UiElement {
       return;
     }
     const range = this.#range();
+    const custom = this.#custom();
+    if (range.custom) {
+      // A fixed window takes only the new readings inside it.
+      if (!custom) return;
+      const inside = fresh.filter((r) => r.t >= custom.from && r.t <= custom.to);
+      if (!inside.length) return;
+      fresh.splice(0, fresh.length, ...inside);
+    }
     // Keep a fixed window from growing without end while the view stays open.
     if (range.ms && d.records.length && d.records[0].t < Date.now() - range.ms - Math.max(range.ms, 10 * MINUTE)) {
       this.#load();
@@ -757,6 +882,10 @@ export class ViewCharts extends UiElement {
     const range = this.#range();
     if (!d) return { from: NaN, to: NaN };
     const first = d.records[0]?.t ?? NaN;
+    if (range.custom) {
+      const custom = this.#custom();
+      return custom ? { from: custom.from, to: custom.to } : { from: NaN, to: NaN };
+    }
     if (d.sourceId === 'live') {
       const to = Math.max(this.now, d.records.at(-1)?.t ?? 0);
       return { from: range.ms ? to - range.ms : first, to };
@@ -843,7 +972,7 @@ export class ViewCharts extends UiElement {
         </select>
         <div class="range" role="group" aria-label=${t('Time range')}>
           ${CHART_RANGES.map(
-            (r) => html`<button aria-pressed=${r.id === range.id ? 'true' : 'false'} @click=${() => this.ctrl.setPref('chartRange', r.id)}>${rangeLabel(r)}</button>`,
+            (r) => html`<button aria-pressed=${r.id === range.id ? 'true' : 'false'} @click=${() => this.#pickRange(r)}>${rangeLabel(r)}</button>`,
           )}
         </div>
         <div class="actions">
@@ -854,6 +983,7 @@ export class ViewCharts extends UiElement {
           </button>
         </div>
       </div>
+      ${this.#customBar()}
       ${groups.size
         ? html`<div class="chips" role="group" aria-label=${t('Values')}>
             ${historyGroups(d?.series ?? []).map(

@@ -922,7 +922,6 @@
   "Writes 1 to register 0x00F1 (value taken from one implementation). The BMS stops answering.": "Записує 1 у регістр 0x00F1 (значення взято з однієї реалізації). BMS перестає відповідати.",
   "Writes 1 to register 0x00F2 (value taken from one implementation). Run it only while no current flows.": "Записує 1 у регістр 0x00F2 (значення взято з однієї реалізації). Виконуйте лише тоді, коли струм не протікає.",
   "Writing settings is not supported by this driver": "Цей драйвер не підтримує запис параметрів",
-  "Writing the battery ID is not confirmed yet, so it is shown but never written.": "Запис ідентифікатора батареї ще не підтверджено, тому він доступний лише для перегляду.",
   "Writing…": "Запис…",
   "Written, but the device reports {value}": "Записано, але значення на пристрої: {value}",
   "Written, but the device reports a different value for: {list}": "Записано, але значення на пристрої відрізняються для: {list}",
@@ -1637,5 +1636,14 @@
   "Serial write timed out": "Час очікування запису в порт вичерпано",
   "Serial port closed": "Послідовний порт закрито",
   "Serial port disconnected": "Послідовний порт відключено",
-  "Serial stream ended": "Потік послідовного порту завершився"
+  "Serial stream ended": "Потік послідовного порту завершився",
+  "Connect another device": "Підключити інший пристрій",
+  "From": "Від",
+  "To": "До",
+  "Period": "Період",
+  "The start must be before the end": "Початок має бути раніше за кінець",
+  "Only ASCII letters, digits and symbols are allowed": "Дозволені лише літери ASCII, цифри та символи",
+  "The text is too long": "Текст задовгий",
+  "Read correctly on an ANT BMS; the write is checked by reading the value back.": "Коректно читається на ANT BMS; запис перевіряється зворотним читанням значення.",
+  "Up to 32 ASCII characters. The write is checked by reading the battery ID back.": "До 32 символів ASCII. Запис перевіряється зворотним читанням ID батареї."
 }

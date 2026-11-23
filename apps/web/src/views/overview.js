@@ -15,6 +15,7 @@ export class ViewOverview extends UiElement {
   static properties = {
     ctrl: { attribute: false },
     pending: { state: true },
+    switching: { state: true },
   };
 
   static styles = [
@@ -47,6 +48,14 @@ export class ViewOverview extends UiElement {
       .card {
         padding: 14px 16px;
         min-width: 0;
+      }
+      .other-device {
+        display: flex;
+        justify-content: center;
+        margin-top: 14px;
+      }
+      .other-device .btn {
+        color: var(--ui-text-muted);
       }
       .card h2 {
         display: flex;
@@ -193,6 +202,7 @@ export class ViewOverview extends UiElement {
     this.ctrl = /** @type {any} */ (null);
     /** @type {Record<string, boolean>} */
     this.pending = {};
+    this.switching = false;
   }
 
   connectedCallback() {
@@ -206,10 +216,24 @@ export class ViewOverview extends UiElement {
       return html`<ui-empty class="waiting" icon="clock" heading=${t('Waiting for data…')} text=${t('The first readings usually arrive within a few seconds.')}></ui-empty>`;
     }
     return html`<div class="grid">
-      ${this.#hero(s)} ${this.#alarms(s)} ${this.#switches(s)} ${this.#cells(s)} ${this.#temps(s)} ${this.#battery(s)} ${this.#trend()}
-      ${this.#extra(s)}
-    </div>`;
+        ${this.#hero(s)} ${this.#alarms(s)} ${this.#switches(s)} ${this.#cells(s)} ${this.#temps(s)} ${this.#battery(s)} ${this.#trend()}
+        ${this.#extra(s)}
+      </div>
+      <div class="other-device">
+        <button class="btn small ghost" ?disabled=${this.switching} @click=${this.#otherDevice}>${icon('link', { size: 16 })}${t('Connect another device')}</button>
+      </div>`;
   }
+
+  /** Disconnect and open the connect screen in one step (otherwise More, Disconnect). */
+  #otherDevice = async () => {
+    this.switching = true;
+    try {
+      await this.ctrl.disconnect();
+    } finally {
+      this.switching = false;
+      location.hash = '#/connect';
+    }
+  };
 
   /** @param {import('@ubms/bms-core/model').BmsSnapshot} s */
   #hero(s) {

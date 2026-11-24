@@ -1,6 +1,6 @@
 {
   "name": "@ubms/web",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "ubms web app: single-page BMS viewer and configurator.",
   "license": "MIT",
@@ -11,10 +11,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ubms/bms-core": "0.1.2",
-    "@ubms/bms-drivers": "0.1.2",
-    "@ubms/transport": "0.1.2",
-    "@ubms/ui": "0.1.2",
+    "@ubms/bms-core": "0.1.3",
+    "@ubms/bms-drivers": "0.1.3",
+    "@ubms/transport": "0.1.3",
+    "@ubms/ui": "0.1.3",
     "lit": "^3.3.3"
   },
   "devDependencies": {

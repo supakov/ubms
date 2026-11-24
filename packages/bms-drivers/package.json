@@ -1,6 +1,6 @@
 {
   "name": "@ubms/bms-drivers",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Protocol drivers (JK, ANT, Daly) with device simulators for demo mode and tests.",
   "license": "MIT",
@@ -11,7 +11,7 @@
     "./*": "./src/*.js"
   },
   "dependencies": {
-    "@ubms/bms-core": "0.1.2",
-    "@ubms/transport": "0.1.2"
+    "@ubms/bms-core": "0.1.3",
+    "@ubms/transport": "0.1.3"
   }
 }

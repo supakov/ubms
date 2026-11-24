@@ -1,6 +1,6 @@
 {
   "name": "@ubms/transport",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Device link layer for web apps: Web Bluetooth, Web Serial, Tauri bridge, in-memory links, framing, checksums and a protocol log. Knows nothing about BMS.",
   "license": "MIT",

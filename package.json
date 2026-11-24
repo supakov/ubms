@@ -1,6 +1,6 @@
 {
   "name": "ubms",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Universal BMS viewer and configurator: JK, ANT, Daly and more over Web Bluetooth and Web Serial.",
   "license": "MIT",

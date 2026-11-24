@@ -15,6 +15,7 @@ the frames in `packages/bms-drivers/test/vectors/<family>.json` are the referenc
 | Daly active balancers | [daly-balancer.md](daly-balancer.md) | Modbus D2 | BLE, UART |
 | JBD BMS | [jbd.md](jbd.md) | DD A5 protocol, UP series Modbus style protocol | BLE, UART, RS485 |
 | Seplos BMS | [seplos.md](seplos.md) | version 2 ASCII and its Bluetooth binary form, version 3 Modbus RTU | BLE, RS485, RS232 |
+| KS BMS (KS48100, KS48200, KS48300) | [ks.md](ks.md) | 7B frames | BLE |
 | Deye batteries | [deye.md](deye.md) | AA 55 protocol (RS485 and AES encrypted Bluetooth), PCS CAN broadcast (Pylontech style) | RS485, BLE, CAN through SLCAN |
 
 ## Drivers
@@ -30,6 +31,7 @@ the frames in `packages/bms-drivers/test/vectors/<family>.json` are the referenc
 | `ant` | ANT | 2021+ protocol | status request 7E A1 01 |
 | `ant-legacy` | ANT | legacy protocol | status request DB DB 00 00 00 00 (BLE) or 5A 5A 00 00 01 01 (UART) |
 | `jbd` | JBD | DD A5 | basic info read DD A5 03 00 FF FD 77, on FF00 at most one app key frame; registered before the Daly drivers |
+| `ks-ble` | KS | 7B frames | status read 7B 01 00 7D, then 7B 61 00 7D, plausible status; right after `jbd` (same FF00 layout, no name to rank by) |
 | `daly-balancer` | Daly | Modbus D2 balancer | D2 read of 62 status registers with plausible cells; registered before `daly-modbus`, which would accept a balancer |
 | `daly-modbus` | Daly | Modbus D2 and 0x81 | status register read (D2 first, then the 0x81 map) |
 | `daly` | Daly | classic A5 | 0x90 request (twice, Daly modules sleep) then 0x94 |

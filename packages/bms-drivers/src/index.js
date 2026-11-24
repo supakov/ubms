@@ -6,6 +6,7 @@ import { neeyDrivers } from './neey/index.js';
 import { dalyBalancerDrivers } from './daly-balancer/index.js';
 import { jbdDefinition, jbdUpRs485Definition } from './jbd/index.js';
 import { seplosDrivers } from './seplos/index.js';
+import { ksDrivers } from './ks/index.js';
 import { deyeBleDefinition, deyeCanDefinition, deyeRs485Definition } from './deye/index.js';
 
 /**
@@ -27,7 +28,8 @@ import { deyeBleDefinition, deyeCanDefinition, deyeRs485Definition } from './dey
  * - FF00 and FFF0 (JBD, Daly, Seplos): `jbd` first (one short read that a JBD answers in about
  *   0.25 s, and an unnamed FF00 device is more often a JBD than a Daly), then the Daly balancer
  *   before `daly-modbus`, which would accept a balancer, then the Daly BMS drivers, then Seplos
- *   (its names BPxx, SPxxB, XZH rank first anyway).
+ *   (its names BPxx, SPxxB, XZH rank first anyway). `ks-ble` sits right after `jbd`: KS modules
+ *   advertise no recognisable name and answer only the 7B frames (docs/protocols/ks.md section 6).
  * - FFF1 (Deye): no other family uses it, so `deye-ble` only matters for ties and sits after
  *   Seplos and before Atorch.
  * - Serial: the rare address based `jbd-up-rs485` after the Daly drivers, then `deye-rs485`
@@ -42,6 +44,7 @@ export const drivers = [
   ...neeyDrivers,
   ...antDrivers,
   jbdDefinition,
+  ...ksDrivers,
   ...dalyBalancerDrivers,
   ...dalyDrivers,
   jbdUpRs485Definition,

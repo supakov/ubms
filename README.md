@@ -14,7 +14,7 @@ UART and RS485 through USB adapters), shows live data and reads and writes the d
 - Demo mode with simulated devices that speak the real protocols.
 
 Supported devices: **JK BMS** (Jikong), **ANT BMS**, **Daly BMS**, **JBD BMS** (and the brands built
-on it), **Seplos BMS**, **Deye** batteries, active balancers from **JK**, **NEEY** (Heltec) and **Daly**, **Atorch** meters
+on it), **Seplos BMS**, **KS BMS** boards (KS48100 and similar, experimental), **Deye** batteries, active balancers from **JK**, **NEEY** (Heltec) and **Daly**, **Atorch** meters
 and electronic loads.
 
 | Driver | Devices and protocol | Links | Settings (writable / read only / actions) |
@@ -36,6 +36,7 @@ and electronic loads.
 | `seplos-v3` | Seplos BMS version 3, Modbus RTU | Bluetooth, RS485 | 170 / 8 / 2 |
 | `seplos-v2-ble` | Seplos BMS version 2 through its Bluetooth module (binary 7E frames) | Bluetooth | 150 / 1 / 0 |
 | `seplos-v2` | Seplos BMS version 2, ASCII "~20" protocol | RS485, RS232 | 150 / 1 / 0 |
+| `ks-ble` | KS BMS boards KS48100, KS48200, KS48300 in wall mounted 16S LiFePO4 packs ("lithium battery wifi" app), "7B" frames through the Bluetooth module (experimental) | Bluetooth | 0 / 43 / 0 |
 | `deye-rs485` | Deye low voltage batteries (LVESS BMS: SE-G5.1 Pro, SE-F Pro-C, RW-M6.1, AI-W5.1 and others), "AA 55" protocol on the RS485 pins of the PCS port | RS485 | read only |
 | `deye-ble` | Deye batteries with Bluetooth (names `BAT...`), the same frames in an AES encrypted session | Bluetooth | read only |
 | `deye-can` | Deye batteries over the inverter CAN bus (Pylontech style frames) through an SLCAN USB-CAN adapter; chosen explicitly, never auto-detected | CAN (SLCAN adapter) | read only |
